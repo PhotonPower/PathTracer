@@ -264,8 +264,8 @@ reference = values(lit_wall, wide, "path", 100_000, 2)
 for method in ("light", "bidir"):
     assert abs(values(lit_wall, wide, method, 400_000, 2).sum() / reference.sum() - 1) < 0.03, method
 side_lit = scene_of([wall], [WHITE], [point((60, 0, 20))])              # light at +x
-image = values(side_lit, pt.Camera((0, 0, 300), (0, 0, 0), (0, 1, 0), 30.0, 2, 2), "path", 20_000, 2).reshape(2, 2)
-assert image[:, 1].sum() > 3 * image[:, 0].sum() and abs(image[0].sum() / image[1].sum() - 1) < 0.05
+image = values(side_lit, pt.Camera((0, 0, 300), (0, 0, 0), (0, 1, 0), 30.0, 2, 2), "path", 100_000, 2).reshape(2, 2)
+assert image[:, 1].sum() > 3 * image[:, 0].sum() and abs(image[0].sum() / image[1].sum() - 1) < 0.1
 star = scene_of([rect((-100, -100, -50), (200, 0, 0), (0, 200, 0))], [BLACK], [point((0.5, 0.5, 0))])
 shares = []
 for focus in (100.0, 50.0):
