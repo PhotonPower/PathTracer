@@ -1,0 +1,22 @@
+# Python package pathtracer (C++ kernel, module pathtracer._core). Build: pip install .
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11>=2.12"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pathtracer"
+version = "0.1.0"
+description = "Light transport on trimmed NURBS geometry: light tracing, path tracing, bidirectional, photon mapping"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[tool.scikit-build]
+cmake.version = ">=3.25"
+cmake.build-type = "Release"
+build-dir = "build/skbuild/{wheel_tag}"
+wheel.packages = ["python/pathtracer"]
+sdist.exclude = ["build", ".claude", ".github"]
+
+[tool.scikit-build.cmake.define]
+PT_BUILD_PYTHON = "ON"
