@@ -203,6 +203,18 @@ PYBIND11_MODULE(_core, m) {
       .def_property_readonly("symmetric", &Distribution::symmetric)
       .def_property_readonly("density", [](const Distribution& d) { return array_of(d.density()); });
   m.def("v_lambda", &v_lambda, "The eye's photopic sensitivity at a wavelength in nm");
+  auto table = [](const LuminaireTable& t) {
+    return py::make_tuple(array_of(t.theta), array_of(t.phi), array_of(t.intensity).reshape({t.phi.size(), t.theta.size()}));
+  };
+  m.def("table_ies", [table](const std::string& text) { return table(table_ies(text)); },
+        "theta, phi (degrees) and intensity[phi, theta] from the text of an IES LM-63 file (type C)");
+  m.def("table_ldt", [table](const std::string& text) { return table(table_ldt(text)); },
+        "theta, phi (degrees) and intensity[phi, theta] from the text of an EULUMDAT file");
+  m.def("load_table", [table](const std::string& path) { return table(load_luminaire(path)); },
+        "theta, phi and intensity[phi, theta] from an .ies or .ldt file");
+  m.def("load_distribution", [](const std::string& path) {
+    return std::make_shared<Distribution>(load_luminaire(path).distribution());
+  }, "The distribution of an .ies or .ldt file");
 
   py::class_<Scene>(m, "Scene")
       .def(py::init([](const Mesh& mesh, const py::list& materials, const std::vector<int>& entity_material,

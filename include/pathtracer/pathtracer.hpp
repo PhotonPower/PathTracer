@@ -238,6 +238,16 @@ class Distribution {
 /// The eye's photopic sensitivity (CIE 1924) at a wavelength in nm.
 double v_lambda(double nm);
 
+/// A luminaire file as a table: theta, phi in degrees (phi a full turn, or one value) and
+/// intensity[phi][theta].
+struct LuminaireTable {
+  std::vector<double> theta, phi, intensity;
+  Distribution distribution() const { return Distribution(theta, phi, intensity); }
+};
+LuminaireTable table_ies(const std::string& text);   // IES LM-63, photometry of type C
+LuminaireTable table_ldt(const std::string& text);   // EULUMDAT
+LuminaireTable load_luminaire(const std::string& path);  // by the ending, else by the content
+
 // ---------------------------------------------------------------------------- scene
 struct SourceSpec {
   std::string name;

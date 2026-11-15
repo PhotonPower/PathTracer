@@ -463,6 +463,52 @@ for method in METHODS:
 assert abs(values(by_file, pt.Camera((0, 0, 20), (0, 0, 80), (0, 1, 0), 10.0, 2, 2), "path", 40_000, 2).mean() * math.pi * 400 - 1) < 0.01
 assert pt.v_lambda(555) == 1 and pt.v_lambda(900) == 0 and abs(pt.v_lambda(505) - 0.413) < 1e-9
 
+# ---- luminaire files: IES with one and with two planes, and the same as EULUMDAT in every symmetry
+def ies(planes, rows):
+    head = ["IESNA:LM-63-2002", "[TEST] made for this test", "TILT=NONE",
+            f"1 1000 1 {len(gammas)} {len(planes)} 1 2 0 0 0", "1 1 100"]
+    return "\n".join(head + [" ".join(f"{v:g}" for v in gammas), " ".join(f"{v:g}" for v in planes)]
+                     + [" ".join(f"{v:.6g}" for v in row) for row in rows])
+
+
+def ldt(symmetry, planes, rows):
+    step = 360 // planes
+    lines_ = ["maker", "1", str(symmetry), str(planes), str(step), str(len(gammas)), "5", "report", "name", "number", "file",
+              "date", "100", "100", "50", "100", "100", "0", "0", "0", "0", "100", "100", "1", "0", "1",
+              "1", "lamp", "1000", "3000", "80", "10"] + ["1"] * 10
+    lines_ += [str(k * step) for k in range(planes)] + [f"{v:g}" for v in gammas]
+    return "\r\n".join(lines_ + [f"{v:.6g}".replace(".", ",") for row in rows for v in row])    # decimal commas
+
+
+from_ies = pt.Distribution(*pt.table_ies(ies([0], [1000 * lambert])))
+assert from_ies.symmetric and np.allclose(from_ies.density, around.density)
+theta_, phi_, cd_ = pt.table_ies(ies([0, 90], [1000 * lambert, 200 * lambert]))
+assert list(phi_) == [0, 90, 180, 270] and np.allclose(cd_[2], cd_[0]) and np.allclose(cd_[3], cd_[1])
+two = pt.Distribution(theta_, phi_, cd_)
+assert np.allclose(two.density, quarter.density)
+for symmetry, planes_, rows in ((1, 24, [1000 * lambert]), (4, 4, [1000 * lambert, 200 * lambert]),
+                                (2, 4, [1000 * lambert, 200 * lambert, 1000 * lambert]),
+                                (0, 4, [1000 * lambert, 200 * lambert, 1000 * lambert, 200 * lambert]),
+                                (3, 4, [200 * lambert, 1000 * lambert, 200 * lambert])):
+    same_shape = pt.Distribution(*pt.table_ldt(ldt(symmetry, planes_, rows)))
+    assert np.allclose(same_shape.density, (around if symmetry == 1 else quarter).density, atol=1e-9), symmetry
+for broken in ("no numbers here", ies([0, 45], [lambert, lambert]), ies([0], [lambert]).replace("TILT=NONE", "TILT=lamp.tlt")):
+    try:
+        pt.table_ies(broken)
+        raise AssertionError("not refused")
+    except ValueError:
+        pass
+import tempfile  # noqa: E402
+
+file_ = Path(tempfile.mkdtemp()) / "lamp.ies"
+file_.write_text(ies([0], [1000 * lambert]))
+assert np.allclose(pt.load_distribution(str(file_)).density, around.density) and len(pt.load_table(str(file_))[0]) == len(gammas)
+try:
+    pt.load_table("/no/such/file.ies")
+    raise AssertionError("not refused")
+except ValueError as e:
+    assert "cannot be read" in str(e), e
+
 # ---- the error from the spread of the batches; shares of the samples; adaptive sampling; threads
 scene = scene_of([wall], [BLACK], [point((0, 0, 50))])
 sensor = pt.TexelSensor(scene, [0], 4)

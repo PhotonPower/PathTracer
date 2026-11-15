@@ -20,7 +20,7 @@ describes the model; this file describes the library.
 | Mesh | `src/mesh.cpp` | every face tessellated in its surface parameters to a chordal tolerance; trimming as a mask over (u, v) tested at every hit; face and texel areas over the same mask; the exact surface normal where a ray meets a curved face (Newton) |
 | BVH | `src/bvh.cpp`, header | surface area heuristic; nearest hit and any hit with a filter |
 | Materials | `src/material.cpp` | absorber, diffuse (with transmission), mirror, glossy, glass, detector, metal and frosted (GGX); by wavelength: index (Abbe number), reflectance, absorption |
-| Sources | `src/scene.cpp` | surfaces (cone or a measured distribution), points, curves (thin wires); line spectra |
+| Sources | `src/scene.cpp`, `src/photometry.cpp` | surfaces (cone or a measured distribution), points, curves (thin wires); line spectra; luminaire files (IES LM-63, EULUMDAT) |
 | Scene | `src/scene.cpp` | closed bodies oriented by counting crossings; glass bodies that touch or lie inside one another |
 | Sensors | `src/sensor.cpp` | textures on faces, pinhole and lens camera; shares of the samples per texel / pixel that adapt |
 | Estimators | `src/integrator.cpp`, `src/photon.cpp` | subpaths, connections, multiple importance sampling; photon mapping; batches on threads, standard errors |
@@ -73,5 +73,4 @@ adaptive sampling, threads, cancel.
 
 ## Not here (yet)
 
-Reading luminaire files (IES, EULUMDAT) – the plugin's `pt_photometry.py` reads them and hands the
-tables over; sources and cameras inside glass; polarisation; coatings; volumes.
+Sources and cameras inside glass; polarisation; coatings; volumes.
