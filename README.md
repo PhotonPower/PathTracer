@@ -9,9 +9,6 @@ It is the C++ twin of the NumPy kernel of the *Path Tracer* plugin of Raytatouil
 path at a time instead of arrays of paths, and run on all processor cores. The plugin's guide
 describes the model; this file describes the library.
 
-> Working name and private so far: the folder, the package name `pathtracer` and the licence are
-> not decided.
-
 ## What is in it
 
 | Part | File | |
@@ -70,6 +67,22 @@ point source over a plane, closed diffuse box, glass plates (also absorbing, dis
 touching, immersed), detectors, wires, measured distributions, cameras with and without a lens,
 photon mapping through glass, microfacet sampling against its evaluation, standard errors,
 adaptive sampling, threads, cancel.
+
+## Licence and sources
+
+MIT, see [LICENSE](LICENSE). No third-party code is included; the package is built with
+[pybind11](https://github.com/pybind/pybind11) (BSD-3-Clause) and uses NumPy (BSD-3-Clause) at run
+time. The methods follow the literature:
+
+- B-spline basis functions: Piegl, Tiller, *The NURBS Book*, algorithm A2.2
+- ray–triangle intersection: Möller, Trumbore (1997)
+- path space, bidirectional path tracing, multiple importance sampling: Veach (1997)
+- microfacet reflection and refraction through rough surfaces: Walter, Marschner, Li, Torrance (2007);
+  sampling the visible normals of GGX: Heitz (2018)
+- progressive photon mapping with a shrinking radius: Knaus, Zwicker (2011)
+- random numbers: xoshiro256++ and SplitMix64 (Blackman, Vigna; public domain)
+- photopic luminous efficiency V(λ): CIE 1924
+- luminaire files: IES LM-63 and EULUMDAT, read from their format descriptions
 
 ## Not here (yet)
 
