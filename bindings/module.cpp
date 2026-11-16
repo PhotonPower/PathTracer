@@ -428,11 +428,11 @@ PYBIND11_MODULE(_core, m) {
         "Light paths as polylines for drawing: points (m, 3) and the start of each polyline (plus the total)");
 
   m.def("escapes", [](const Scene& scene, long long n, int depth, std::uint64_t seed, std::uint64_t index,
-                      int threads) {
+                      int threads, const std::vector<int>& skip) {
     Escapes e;
     {
       py::gil_scoped_release release;
-      e = escapes(scene, n, depth, seed, index, threads);
+      e = escapes(scene, n, depth, seed, index, threads, skip);
     }
     py::dict out;
     out["d"] = array_of(e.d);
@@ -445,8 +445,9 @@ PYBIND11_MODULE(_core, m) {
     out["threads"] = e.threads;
     return out;
   }, py::arg("scene"), py::arg("n"), py::arg("depth"), py::arg("seed") = 0, py::arg("index") = 0,
-        py::arg("threads") = 0,
+        py::arg("threads") = 0, py::arg("skip") = std::vector<int>{},
         "The light that leaves the scene, from n light subpaths of up to depth segments: {d (m, 3), flux, channel, "
         "bounces, first, last, rays, threads} – the fluxes of one call add up to the escaping flux; bounces: surface "
-        "events before it left; first / last: entities of the first and the last surface (-1: none)");
+        "events before it left; first / last: entities of the first surface not in skip and of the last surface "
+        "(-1: none)");
 }

@@ -576,11 +576,15 @@ assert (short["bounces"] == 0).all() and abs(short["flux"].sum() / (2 * (1 - sha
 alone, crowd = (pt.escapes(scene, 20_000, 3, seed=SEED, threads=t) for t in (1, 4))
 assert alone["threads"] == 1 and crowd["threads"] == 4 and alone["rays"] == crowd["rays"]
 assert all(np.array_equal(alone[key], crowd[key]) for key in ("d", "flux", "channel", "bounces", "first", "last"))
-try:
-    pt.escapes(scene, 10, 0)
-    raise AssertionError("not refused")
-except ValueError as e:
-    assert "segment" in str(e), e
+past = pt.escapes(scene, 20_000, 3, seed=SEED, skip=[0])                  # the square passed over: no first surface
+assert (past["first"] == -1).all() and np.array_equal(past["last"], alone["last"])
+assert np.array_equal(pt.escapes(scene, 20_000, 3, seed=SEED, skip=[5])["first"], alone["first"])
+for bad, word in (({"depth": 0}, "segment"), ({"skip": [-1]}, "skip")):
+    try:
+        pt.escapes(scene, 10, **{"depth": 3, **bad})
+        raise AssertionError("not refused")
+    except ValueError as e:
+        assert word in str(e), e
 
 fractions, calls = [], []
 stopped = pt.render(lit, both, "bidir", 5_000_000, 6, seed=SEED, batch=20_000, progress=fractions.append,

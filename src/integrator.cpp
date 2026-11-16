@@ -517,10 +517,18 @@ void light_paths(const Scene& scene, int n, int depth, std::uint64_t seed, std::
   }
 }
 
-Escapes escapes(const Scene& scene, long long n, int depth, std::uint64_t seed, std::uint64_t index, int threads) {
+Escapes escapes(const Scene& scene, long long n, int depth, std::uint64_t seed, std::uint64_t index, int threads,
+                const std::vector<int>& skip) {
   if (depth < 1) throw std::invalid_argument("paths need at least one segment");
   if (depth > 120) throw std::invalid_argument("paths of more than 120 segments are not supported");
   if (n < 1) throw std::invalid_argument("at least one subpath is needed");
+  std::vector<char> skipped;  // by entity: not counted as the first surface
+  for (int e : skip) {
+    if (e < 0) throw std::invalid_argument("skip: entities are numbers from 0 on");
+    if (static_cast<std::size_t>(e) >= skipped.size()) skipped.resize(static_cast<std::size_t>(e) + 1, 0);
+    skipped[static_cast<std::size_t>(e)] = 1;
+  }
+  auto counted = [&](int e) { return e >= 0 && (static_cast<std::size_t>(e) >= skipped.size() || !skipped[e]); };
   Escapes out;
   out.threads = threads > 0 ? threads : std::max(1u, std::thread::hardware_concurrency());
   Rng order(seed, index, 0xffffffffULL);
@@ -544,7 +552,11 @@ Escapes escapes(const Scene& scene, long long n, int depth, std::uint64_t seed, 
       beta[i] = path.escape_beta;
       channel[i] = path.channel;
       bounces[i] = k;
-      first[i] = k >= 1 ? path.v[1].entity : -1;
+      for (int j = 1; j <= k; ++j)
+        if (counted(path.v[j].entity)) {
+          first[i] = path.v[j].entity;
+          break;
+        }
       last[i] = k >= 1 ? path.v[k].entity : -1;
     }
   });

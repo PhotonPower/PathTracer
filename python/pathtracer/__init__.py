@@ -16,6 +16,6 @@ Lengths in mm, power in W. The geometry is given as the dicts of the .nfcad form
 from ._core import (KINDS, METHODS, Camera, Distribution, Mesh, Scene, Sensor, TexelSensor, build_mesh, escapes,
                     light_paths, load_distribution, load_table, render, table_ies, table_ldt, v_lambda)
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = ["KINDS", "METHODS", "Camera", "Distribution", "Mesh", "Scene", "Sensor", "TexelSensor", "build_mesh",
            "escapes", "light_paths", "load_distribution", "load_table", "render", "table_ies", "table_ldt", "v_lambda"]
