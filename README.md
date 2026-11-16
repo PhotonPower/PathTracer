@@ -20,7 +20,7 @@ describes the model; this file describes the library.
 | Sources | `src/scene.cpp`, `src/photometry.cpp` | surfaces (cone or a measured distribution), points, curves (thin wires); line spectra; luminaire files (IES LM-63, EULUMDAT) |
 | Scene | `src/scene.cpp` | closed bodies oriented by counting crossings; glass bodies that touch or lie inside one another |
 | Sensors | `src/sensor.cpp` | textures on faces, pinhole and lens camera; shares of the samples per texel / pixel that adapt |
-| Estimators | `src/integrator.cpp`, `src/photon.cpp` | subpaths, connections, multiple importance sampling; photon mapping; batches on threads, standard errors |
+| Estimators | `src/integrator.cpp`, `src/photon.cpp` | subpaths, connections, multiple importance sampling; photon mapping; batches on threads, standard errors; the light that leaves the scene |
 | Python | `bindings/module.cpp`, `python/pathtracer` | geometry as `.nfcad` dicts in, NumPy arrays out |
 
 Lengths in mm, power in W: radiance in W/(mm² sr), irradiance = flux per texel / texel area.
@@ -59,6 +59,13 @@ image = pt.render(scene, pt.Camera((300, -300, 200), (0, 0, 0), (0, 0, 1), 40, 3
 `render(scene, sensor, method, samples, depth, seed=0, threads=0, radius=0, adaptive=False,
 weights=None, batch=0, progress=None, cancelled=None)` – methods `light`, `path`, `bidir`,
 `photon`; `threads` 0: all cores; the result is the same for any number of threads up to rounding.
+
+`escapes(scene, n, depth, seed=0, index=0, threads=0)` – the light that leaves the scene (a far
+field, e.g. the luminous intensity of a luminaire): n light subpaths of up to `depth` segments;
+for every one that leaves, its direction `d`, its `flux` (the fluxes of one call add up to the
+escaping flux), its wavelength's `channel`, its number of surface events `bounces` (0: straight
+from the source) and the entities of its `first` and `last` surface (-1: none). Batches of one
+seed are independent by `index`; the result does not depend on the number of threads.
 
 ## Tests
 

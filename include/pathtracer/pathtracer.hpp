@@ -430,6 +430,22 @@ Result render(const Scene& scene, Sensor& sensor, const RenderOptions& options);
 void light_paths(const Scene& scene, int n, int depth, std::uint64_t seed, std::vector<Vec3>& points,
                  std::vector<long long>& starts);
 
+/// The light that leaves the scene: per escaped light subpath its direction, its flux (its weight
+/// over n, so that the fluxes of one call add up to the escaping flux), its wavelength's number,
+/// its number of surface events before it left (0: straight from the source) and the entities of
+/// its first and its last surface (-1 when there was none).
+struct Escapes {
+  std::vector<Vec3> d;
+  std::vector<double> flux;
+  std::vector<int> channel, bounces, first, last;
+  long long rays = 0;
+  int threads = 1;
+};
+/// n light subpaths of up to `depth` segments, batch `index` of the seed (batches of one seed are
+/// independent); threads 0: all cores. The result does not depend on the number of threads.
+Escapes escapes(const Scene& scene, long long n, int depth, std::uint64_t seed, std::uint64_t index = 0,
+                int threads = 0);
+
 // ---------------------------------------------------------------------------- inline: BVH traversal
 template <class Accept>
 Hit Bvh::intersect(const Vec3& o, const Vec3& d, double tmax, bool any, Accept&& accept) const {

@@ -70,6 +70,7 @@ void walk(const Scene& sc, const Sensor* sensor, Path& path, Vec3 d, double beta
     if (h.tri < 0) {
       path.escape = k - 1;
       path.escape_dir = d;
+      path.escape_beta = beta;
       break;
     }
     Vec3 ns;
@@ -121,6 +122,7 @@ void walk(const Scene& sc, const Sensor* sensor, Path& path, Vec3 d, double beta
     vx.m = m;
     vx.tex = sensor && !sensor->camera ? sensor->texel(h.tri, u, v) : -1;
     vx.src = sc.face_source[mesh.face[h.tri]];
+    vx.entity = body;
     vx.beta = beta;
     vx.pf = pdf * std::abs(cs) / dist2;
     vx.outside = outside;
@@ -513,6 +515,50 @@ void light_paths(const Scene& scene, int n, int depth, std::uint64_t seed, std::
     else
       points.resize(before);
   }
+}
+
+Escapes escapes(const Scene& scene, long long n, int depth, std::uint64_t seed, std::uint64_t index, int threads) {
+  if (depth < 1) throw std::invalid_argument("paths need at least one segment");
+  if (depth > 120) throw std::invalid_argument("paths of more than 120 segments are not supported");
+  if (n < 1) throw std::invalid_argument("at least one subpath is needed");
+  Escapes out;
+  out.threads = threads > 0 ? threads : std::max(1u, std::thread::hardware_concurrency());
+  Rng order(seed, index, 0xffffffffULL);
+  const auto pick = stratified(n, order);
+  // every subpath writes its own slot, so the order does not depend on the threads
+  const std::size_t count = static_cast<std::size_t>(n);
+  std::vector<Vec3> d(count);
+  std::vector<double> beta(count, 0.0);
+  std::vector<int> channel(count, 0), bounces(count, -1), first(count, -1), last(count, -1);
+  std::vector<Path> paths(out.threads);
+  std::vector<long long> rays(out.threads, 0);
+  parallel_for(n, out.threads, [&](long long a, long long b, int id) {
+    Path& path = paths[id];
+    for (long long i = a; i < b; ++i) {
+      Rng rng(seed, index, static_cast<std::uint64_t>(i));
+      light_subpath(scene, nullptr, path, depth + 1, pick[i], rng, false);
+      rays[id] += path.rays;
+      if (path.escape < 0) continue;
+      const int k = path.escape;
+      d[i] = path.escape_dir;
+      beta[i] = path.escape_beta;
+      channel[i] = path.channel;
+      bounces[i] = k;
+      first[i] = k >= 1 ? path.v[1].entity : -1;
+      last[i] = k >= 1 ? path.v[k].entity : -1;
+    }
+  });
+  for (long long r : rays) out.rays += r;
+  for (std::size_t i = 0; i < count; ++i) {
+    if (bounces[i] < 0) continue;
+    out.d.push_back(d[i]);
+    out.flux.push_back(beta[i] / static_cast<double>(n));
+    out.channel.push_back(channel[i]);
+    out.bounces.push_back(bounces[i]);
+    out.first.push_back(first[i]);
+    out.last.push_back(last[i]);
+  }
+  return out;
 }
 
 }  // namespace pt
