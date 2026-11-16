@@ -554,6 +554,34 @@ one_thread = pt.render(lit, both, "bidir", 100_000, 4, seed=SEED, threads=1)
 many = pt.render(lit, both, "bidir", 100_000, 4, seed=SEED, threads=4)
 assert one_thread["threads"] == 1 and many["threads"] == 4
 assert np.allclose(one_thread["values"], many["values"], rtol=1e-9) and one_thread["rays"] == many["rays"]
+# ---- the light that leaves the scene: a point source over a mirror square
+square = rect((-10, -10, 0), (20, 0, 0), (0, 20, 0))                      # normal +z, towards the source
+scene = scene_of([square], [MIRROR], [point((0, 0, 5), flux=2.0)])
+share = solid_angle(10, 10, 5) / (4 * math.pi)
+gone = [pt.escapes(scene, 200_000, 3, seed=SEED, index=k) for k in range(2)]
+assert all(g["d"].shape == (len(g["flux"]), 3) for g in gone)
+direct = sum(g["flux"][g["bounces"] == 0].sum() for g in gone) / 2
+mirrored = sum(g["flux"][g["bounces"] == 1].sum() for g in gone) / 2
+assert abs(direct / (2 * (1 - share)) - 1) < 0.005 and abs(mirrored / (2 * 0.9 * share) - 1) < 0.005, (direct, mirrored)
+for g in gone:
+    once = g["bounces"] == 1
+    assert once.any() and (g["bounces"] <= 1).all() and (g["first"][once] == 0).all() and (g["last"][once] == 0).all()
+    assert (g["first"][~once] == -1).all() and (g["d"][once, 2] > 0).all()
+    down = ~once & (g["d"][:, 2] < 0)                                    # straight down: beside the square
+    reach = 5 / -g["d"][down, 2]
+    assert (np.maximum(np.abs(g["d"][down, 0]), np.abs(g["d"][down, 1])) * reach > 10 - 1e-6).all()
+assert not np.array_equal(gone[0]["flux"], gone[1]["flux"])                # the batches differ
+short = pt.escapes(scene, 50_000, 1, seed=SEED)
+assert (short["bounces"] == 0).all() and abs(short["flux"].sum() / (2 * (1 - share)) - 1) < 0.01
+alone, crowd = (pt.escapes(scene, 20_000, 3, seed=SEED, threads=t) for t in (1, 4))
+assert alone["threads"] == 1 and crowd["threads"] == 4 and alone["rays"] == crowd["rays"]
+assert all(np.array_equal(alone[key], crowd[key]) for key in ("d", "flux", "channel", "bounces", "first", "last"))
+try:
+    pt.escapes(scene, 10, 0)
+    raise AssertionError("not refused")
+except ValueError as e:
+    assert "segment" in str(e), e
+
 fractions, calls = [], []
 stopped = pt.render(lit, both, "bidir", 5_000_000, 6, seed=SEED, batch=20_000, progress=fractions.append,
                     cancelled=lambda: calls.append(1) or len(calls) > 2)

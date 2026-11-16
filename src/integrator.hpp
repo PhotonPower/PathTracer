@@ -16,6 +16,7 @@ struct Vertex {
   int m = 0;
   long long tex = -1;
   int src = -1;
+  int entity = -1;  // the surface's entity (-1: vertex 0)
   double beta = 0, pf = 0, pr = 0, outside = 1;
   bool spec = false;
 };
@@ -32,6 +33,7 @@ struct Path {
   int channel = 0;      // number of the path's wavelength
   int escape = -1;      // vertex whose ray left the scene
   Vec3 escape_dir;
+  double escape_beta = 0;  // weight of the subpath as it left
   std::vector<Crossing> cross;
   long long rays = 0;
   void reset(int k) {
