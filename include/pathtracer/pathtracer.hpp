@@ -443,8 +443,9 @@ struct Escapes {
 };
 /// n light subpaths of up to `depth` segments, batch `index` of the seed (batches of one seed are
 /// independent); threads 0: all cores. The result does not depend on the number of threads.
+/// first: the first surface whose entity is not in `skip` (e.g. a lamp's glass the light passes first).
 Escapes escapes(const Scene& scene, long long n, int depth, std::uint64_t seed, std::uint64_t index = 0,
-                int threads = 0);
+                int threads = 0, const std::vector<int>& skip = {});
 
 // ---------------------------------------------------------------------------- inline: BVH traversal
 template <class Accept>
