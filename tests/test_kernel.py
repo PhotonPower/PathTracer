@@ -9,7 +9,8 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
+if not os.environ.get("PT_TEST_INSTALLED"):  # the wheel test (cibuildwheel): the installed package
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
 
 import pathtracer as pt  # noqa: E402
 
