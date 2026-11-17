@@ -25,6 +25,17 @@ describes the model; this file describes the library.
 
 Lengths in mm, power in W: radiance in W/(mm² sr), irradiance = flux per texel / texel area.
 
+## Install
+
+```bash
+pip install pathtracer             # wheels for Linux x86_64, Windows AMD64, macOS arm64; CPython 3.10–3.13
+```
+
+Releases: a tag `v<version>` (the version of `pyproject.toml` and `python/pathtracer/__init__.py`)
+builds the wheels and the sdist (`.github/workflows/wheels.yml`) and attaches them to a GitHub
+release; *Run workflow* on the tag with `pypi` ticked uploads them to PyPI (Trusted Publishing,
+environment `pypi`).
+
 ## Build
 
 Needs a C++20 compiler, CMake ≥ 3.25, Python ≥ 3.10 with NumPy and pybind11.
